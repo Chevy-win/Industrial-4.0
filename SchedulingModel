@@ -1,1 +1,138 @@
+using CP;
 
+int NbFoups;
+tuple FoupInfo {
+   key string foup;
+   float priority;
+   int waitingtime;
+   int isactive;
+   int availfordispatch;
+   int ignoreBatchSize; //
+   string rqteqptype1;
+   int rqtseq1;
+   int rqt1;
+   string rqteqptype2;
+   int rqtseq2;
+   int rqt2;
+   string rqteqptype3;
+   int rqtseq3;
+   int rqt3;
+};
+{FoupInfo} FoupInfos;  
+
+int NbEqps;
+tuple Eqp {
+	key string eqp;
+	string eqptype;
+	int availtime;
+	int stopdispatchtime;
+    int rtdeqptype;
+};
+{Eqp} Eqps;  
+
+int NbChambers;
+tuple Chamber {
+    key string chamber;
+    string type;
+	string eqp;
+	string eqptype;
+	int availtime;
+	int stopdispatchtime;
+	int is40KD22;
+};
+{Chamber} Chambers;  
+
+int NbTasks;
+tuple Task {
+	string foup;
+	int seq;
+	string recipe;
+	int component;
+    string eqptype;
+    int isprocess;
+    int assignedpriority;
+    string qtimeeqptype1;
+    int qtimeseq1;
+    int qtimelimit1;
+    string qtimeeqptype2;
+    int qtimeseq2;
+    int qtimelimit2;
+    string qtimeeqptype3;
+    int qtimeseq3;
+    int qtimelimit3;
+};
+{Task} Tasks;
+
+int NbPPIDs;
+tuple PPID {
+    string ppid;
+    int ppidnumber;
+	string foup;
+	int seq;
+	string recipe;
+	string eqp;
+	string eqptype;
+	int ptime;
+	int advancedinhibit;
+	int minbatchwafers; //
+	int maxbatchwafers; //
+	int batchsize; //
+	int minwafercountperbatch; //
+	int eqrecoverystart;
+	int eqrecoveryend;
+	{string} chamber;
+};
+{PPID} PPIDs;
+{string} chambersrequired [1..NbPPIDs];
+
+int TransitTime;
+int DueDate;
+int QtimeUrgent;
+int QtimeBuffer;
+
+int NbCUSOVTStopPeriod;
+tuple CUSOVTStopPeriod
+{
+    string eqp;
+    int CUSOVTNextCCStopTime;
+    int CUSOVTNextCCStartTime;
+};
+{CUSOVTStopPeriod} CUSOVTStopPeriods;
+
+{string} Foups;
+float Priority[f in Foups];
+int WaitingTime[f in Foups];
+int IsActive[f in Foups]; 
+int AvailForDispFoup[f in Foups]; 
+int IgnoreBatchSize[f in Foups]; 
+
+tuple RQT {
+   string rqteqptype;
+   int rqtseq;
+   int rqt;
+};
+RQT RemainingQTime1[f in Foups]; 
+RQT RemainingQTime2[f in Foups]; 
+RQT RemainingQTime3[f in Foups]; 
+
+{Chamber} AllChambers;
+{string} AllChamberIds;
+{Task} CUSOVTTasks; 
+{PPID} CUSOVTPPIDs;
+{Eqp} CUSOVTEqps; 
+{Eqp} ToolEqps;  
+{Eqp} BatchEqps;
+//{Chamber} CUOXEChs;  
+
+tuple Assignment {
+   Task task;
+   PPID ppid;
+   Eqp eqp; 
+};
+{Assignment} Assignments; 
+{Assignment} Assignments_Supp; 
+
+int MinDispatchTime[a in Assignments]; 
+int StopDispatchTime[a in Assignments]; 
+int CuoxeLotSum;
+int CuoxeLotis40KD22;
