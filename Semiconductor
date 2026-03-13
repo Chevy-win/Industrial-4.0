@@ -47,3 +47,6 @@ HKMG（High-K Metal Gate）: 可有效减少电流泄露的新一代MOSFET栅极
 化学机械抛光（CMP，Chemical Mechanical Polishing）：通过物理、化学反应研磨, 去除非所需物质，使半导体晶圆表面变得平坦
 离子注入（Ion Implant）：在半导体制造过程中，为把纯净的晶圆变成半导体状态，将三族或五族元素以一定的方式掺入到半导体基片规定的区域内。
 HKMG（High-K Metal Gate）: 可有效减少电流泄露的新一代MOSFET栅极；是一种以金属代替传统的多晶矽（Polysilicon） 栅极，以高介电（High-K）取代氧化硅绝缘膜的晶体管。
+Ion Implanter : HI(High Current), MI(Medium Current), HEI(High Energy)
+
+Furnace 炉管机台： Atmospheric Presure常压炉管(ALLOY)和Low Pressure低压炉管(SIN POLYE TEOS Tetra-Ethyl-Otho-Silicate)
