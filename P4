@@ -1,0 +1,333 @@
+static void WriteToTextFile()
+{
+    List<string> data = new List<string>();
+    List<string> ppidCleanCoat = new List<string>();
+    DataTable dt = new DataTable();
+    DataTable dt1 = new DataTable();
+    DataTable dt2 = new DataTable();
+    DataTable dt3 = new DataTable();
+    DataTable dt_CUSOVT = new DataTable();
+    int nbFoups = 0;
+    int nbEqps = 0;
+    int maxAvailTime = 0;
+    int maxAvailDisp = 0;
+    int ignoreBatchSize = 0;
+    int waitingTime = 0;
+    string rqteqptype1 = "0";
+    int rqtseq1 = 0;
+    int rqt1 = 0;
+    string rqteqptype2 = "0";
+    int rqtseq2 = 0;
+    int rqt2 = 0;
+    string rqteqptype3 = "0";
+    int rqtseq3 = 0;
+    int rqt3 = 0;
+    string qtimeeqptype1 = "0";
+    int qtimeseq1 = 0;
+    int qtime1 = 0;
+    string qtimeeqptype2 = "0";
+    int qtimeseq2 = 0;
+    int qtime2 = 0;
+    string qtimeeqptype3 = "0";
+    int qtimeseq3 = 0;
+    int qtime3 = 0;
+    int CUOXELotsSum = 0;
+    int CUOXELotsis40KD22Sum = 0;
+    //Foups
+    nbFoups = dt_input_foup.AsEnumerable().Select(r => r.Field<string>("FOUPID")).Distinct().Count();
+    data.Add(nbFoups.ToString());
+    dt1 = new DataView(dt_input_foup).ToTable(true, "FOUPID", "Priority", "WaitingTime", "IsActive", "AvailDispInMinute", "IgnoreBatchSize", "RQTEqpType1", "RQTSeq1", "RQT1", "RQTEqpType2", "RQTSeq2", "RQT2", "RQTEqpType3", "RQTSeq3", "RQT3");
+    dt2 = new DataView(dt_input_foup).ToTable(true, "FOUPID");
+    foreach (DataRow dr in dt2.Rows)
+    {
+        dt = new DataTable();
+        if (dt1.Select(string.Format("FOUPID = '{0}'", dr["FOUPID"].ToString())).Length > 0)
+        {
+            dt = dt1.Select(string.Format("FOUPID = '{0}'", dr["FOUPID"].ToString())).CopyToDataTable();
+            maxAvailDisp = Convert.ToInt32(dt.Compute("max([AvailDispInMinute])", string.Empty));
+            ignoreBatchSize = Convert.ToInt32(dt.Compute("max([IgnoreBatchSize])", string.Empty));
+            waitingTime = Convert.ToInt32(dt.Rows[0]["WaitingTime"]) + 1;
+            DataTable dt_temp = dt_input_foup.Select(string.Format("FOUPID = '{0}'", dr["FOUPID"].ToString())).CopyToDataTable();
+            if (Convert.ToInt32(dt.Rows[0]["RQT1"]) == 99999999)
+            {
+                rqteqptype1 = "0";
+                rqtseq1 = 0;
+                rqt1 = 99999999;
+            }
+            else
+            {
+                rqteqptype1 = dt.Rows[0]["RQTEqpType1"].ToString();
+                rqtseq1 = Convert.ToInt32(dt.Rows[0]["RQTSeq1"]);
+                rqt1 = Convert.ToInt32(dt.Rows[0]["RQT1"]);
+            }
+            if (Convert.ToInt32(dt.Rows[0]["RQT2"]) == 99999999)
+            {
+                rqteqptype2 = "0";
+                rqtseq2 = 0;
+                rqt2 = 99999999;
+            }
+            else
+            {
+                rqteqptype2 = dt.Rows[0]["RQTEqpType2"].ToString();
+                rqtseq2 = Convert.ToInt32(dt.Rows[0]["RQTSeq2"]);
+                rqt2 = Convert.ToInt32(dt.Rows[0]["RQT2"]);
+            }
+            if (Convert.ToInt32(dt.Rows[0]["RQT3"]) == 99999999)
+            {
+                rqteqptype3 = "0";
+                rqtseq3 = 0;
+                rqt3 = 99999999;
+            }
+            else
+            {
+                rqteqptype3 = dt.Rows[0]["RQTEqpType3"].ToString();
+                rqtseq3 = Convert.ToInt32(dt.Rows[0]["RQTSeq3"]);
+                rqt3 = Convert.ToInt32(dt.Rows[0]["RQT3"]);
+            }
+            data.Add(dt.Rows[0]["FOUPID"].ToString() + " " + dt.Rows[0]["Priority"].ToString() + " " + waitingTime + " " + dt.Rows[0]["IsActive"].ToString() + " " + maxAvailDisp + " " + ignoreBatchSize + " " +
+                rqteqptype1 + " " + rqtseq1 + " " + rqt1 + " " +
+                rqteqptype2 + " " + rqtseq2 + " " + rqt2 + " " +
+                rqteqptype3 + " " + rqtseq3 + " " + rqt3);
+        }
+    }
+    //Eqps
+    Dictionary<string, string> dct_stopdispatchtime = new Dictionary<string, string>();
+    dt = new DataView(dt_input_foup).ToTable(true, "StopDispatchTime");
+    foreach (DataRow dr in dt.Rows)
+    {
+        if (dr["StopDispatchTime"].ToString() != "")
+        {
+            string[] values = dr["StopDispatchTime"].ToString().Split(';');
+            foreach (string s in values)
+            {
+                string[] time = s.Split(':');
+                if (!dct_stopdispatchtime.ContainsKey(time[0]))
+                {
+                    dct_stopdispatchtime.Add(time[0], time[1]);
+                }
+            }
+        }
+    }
+    nbEqps = dt_input_foup.AsEnumerable().Select(r => r.Field<string>("EqpID")).Distinct().Count();
+    data.Add(nbEqps.ToString());
+    dt1 = new DataView(dt_input_foup).ToTable(true, "EqpID", "EqpType", "AvailTimeInMinute", "StopDispatchTime", "RTDEqpType");
+    dt2 = new DataView(dt_input_foup).ToTable(true, "EqpID");
+    dt3 = new DataView(dt_input_foup).ToTable(true, "EqpID", "EqpType", "CUSOVTNextCCStopTime");
+    foreach (DataRow dr in dt2.Rows)
+    {
+        dt = new DataTable();
+
+        if (dt1.Select(string.Format("EqpID = '{0}'", dr["EqpID"].ToString())).Length > 0)
+        {
+            dt = dt1.Select(string.Format("EqpID = '{0}'", dr["EqpID"].ToString())).CopyToDataTable();
+            maxAvailTime = Convert.ToInt32(dt.Compute("max([AvailTimeInMinute])", string.Empty));
+            double stopdispatchtime = DUEDATE;
+            if (dct_stopdispatchtime.ContainsKey(dr["EqpID"].ToString()))
+            {
+                double time = Math.Truncate(Convert.ToDateTime(DateTime.ParseExact(dct_stopdispatchtime[dr["EqpID"].ToString()], "yyyyMMddHHmmss000", CultureInfo.InvariantCulture)).Subtract(currentTime).TotalMinutes);
+                time = time < 0 ? 0 : time;
+                stopdispatchtime = time;
+            }
+
+            data.Add(dt.Rows[0]["EqpID"].ToString() + " " + dt.Rows[0]["EqpType"].ToString() + " " + maxAvailTime + " " + stopdispatchtime
+                + " " + (dt.Rows[0]["RTDEqpType"].ToString() == "Furnace" ? 1 : 0));
+        }
+    }
+
+    // Add CUSOVT Stop Period
+    int NbCUSOVTStopPeriod = 0;
+    int NbCUSOVTEqp = 0;
+    int NbCUSOVTTotal = 0;
+    if (dt3.Select(string.Format("EqpType = '{0}' AND CUSOVTNextCCStopTime > '{1}'", "CUSOVT", currentTime)).Length > 0)
+    {
+        
+        dt_CUSOVT = dt3.Select(string.Format("EqpType = '{0}' AND CUSOVTNextCCStopTime > '{1}'", "CUSOVT", currentTime)).CopyToDataTable();
+        dt_CUSOVT = new DataView(dt_CUSOVT).ToTable(true, "EqpID", "CUSOVTNextCCStopTime");
+        NbCUSOVTEqp = dt_CUSOVT.AsEnumerable().Select(r => r.Field<string>("EqpID")).Distinct().Count();
+        foreach (DataRow dr in dt_CUSOVT.Rows)
+        {
+            NbCUSOVTStopPeriod = Convert.ToInt32(1440 - Convert.ToDateTime(dr["CUSOVTNextCCStopTime"]).Subtract(currentTime).TotalMinutes) > 0 ? 1 : 0;
+            NbCUSOVTTotal += NbCUSOVTStopPeriod;
+        }
+        data.Add(NbCUSOVTTotal.ToString());
+        //Console.WriteLine(NbCUSOVTTotal.ToString());
+        foreach (DataRow dr in dt_CUSOVT.Rows)
+        {
+            NbCUSOVTStopPeriod = Convert.ToInt32(1440 - Convert.ToDateTime(dr["CUSOVTNextCCStopTime"]).Subtract(currentTime).TotalMinutes) > 0 ? 1: 0;
+            //NbCUSOVTTotal += NbCUSOVTStopPeriod;
+            if (NbCUSOVTStopPeriod > 0)
+            {
+                data.Add(dr["EqpID"] + " " + Convert.ToInt32((Convert.ToDateTime(dr["CUSOVTNextCCStopTime"]).Subtract(currentTime).TotalMinutes) ) 
+                    + " " + Convert.ToInt32((Convert.ToDateTime(dr["CUSOVTNextCCStopTime"]).Subtract(currentTime).TotalMinutes) + 120));
+            }
+            
+        }
+    }
+    else
+    {
+        data.Add(NbCUSOVTTotal.ToString());
+        //Console.WriteLine(NbCUSOVTTotal.ToString());
+    }
+
+    //Chambers
+    dt = new DataView(dt_input_eqp).ToTable(true, "ChamberID", "ChamberType", "EqpID", "EqpType", "AvailTimeInMinute", "is40KD22");
+    if (dt.Select(string.Format("EqpType <> '{0}'", "UPOLY")).Length > 0)
+        dt = dt.Select(string.Format("EqpType <> '{0}'", "UPOLY")).CopyToDataTable();
+    else
+        dt = new DataTable();
+    List<string> data1 = new List<string>();
+    foreach (DataRow dr in dt.Rows)
+    {
+        double stopdispatchtime = DUEDATE;
+        if (dct_stopdispatchtime.ContainsKey(dr["EqpID"].ToString()))
+        {
+            double time = Math.Truncate(Convert.ToDateTime(DateTime.ParseExact(dct_stopdispatchtime[dr["EqpID"].ToString()], "yyyyMMddHHmmss000", CultureInfo.InvariantCulture)).Subtract(currentTime).TotalMinutes);
+            time = time < 0 ? 0 : time;
+            stopdispatchtime = time;
+        }
+        if (dct_stopdispatchtime.ContainsKey(dr["ChamberID"].ToString()))
+        {
+            double time = Math.Truncate(Convert.ToDateTime(DateTime.ParseExact(dct_stopdispatchtime[dr["ChamberID"].ToString()], "yyyyMMddHHmmss000", CultureInfo.InvariantCulture)).Subtract(currentTime).TotalMinutes);
+            time = time < 0 ? 0 : time;
+            if (time < stopdispatchtime)
+                stopdispatchtime = time;
+        }
+
+        if (stopdispatchtime > 0)
+            data1.Add(dr["ChamberID"] + " " + dr["ChamberType"] + " " + dr["EqpID"] + " " + dr["EqpType"] + " " + dr["AvailTimeInMinute"] + " " + stopdispatchtime + " " + dr["is40KD22"]);
+    }
+    data.Add("" + data1.Count + "");
+    data.AddRange(data1);
+
+   //Tasks
+    dt = new DataTable();
+    dt = new DataView(dt_input_foup).ToTable(true, "FOUPID", "Seq", "Recipe", "NumWafer", "EqpType", "RTDEqpType", "AssignedPriority", "QTimeEqpType1", "QTimeSeq1", "QTime1", "QTimeEqpType2", "QTimeSeq2", "QTime2", "QTimeEqpType3", "QTimeSeq3", "QTime3");
+    data.Add("" + (dt.Rows.Count) + "");
+    foreach (DataRow dr in dt.Rows)
+    {
+        if (Convert.ToInt32(dr["QTime1"]) == 0)
+        {
+            qtimeeqptype1 = "0";
+            qtimeseq1 = 0;
+            qtime1 = 99999999;
+        }
+        else
+        {
+            qtimeeqptype1 = dr["QTimeEqpType1"].ToString();
+            qtimeseq1 = Convert.ToInt32(dr["QTimeSeq1"]);
+            qtime1 = Convert.ToInt32(dr["QTime1"]);
+        }
+        if (Convert.ToInt32(dr["QTime2"]) == 0)
+        {
+            qtimeeqptype2 = "0";
+            qtimeseq2 = 0;
+            qtime2 = 99999999;
+        }
+        else
+        {
+            qtimeeqptype2 = dr["QTimeEqpType2"].ToString();
+            qtimeseq2 = Convert.ToInt32(dr["QTimeSeq2"]);
+            qtime2 = Convert.ToInt32(dr["QTime2"]);
+        }
+        if (Convert.ToInt32(dr["QTime3"]) == 0)
+        {
+            qtimeeqptype3 = "0";
+            qtimeseq3 = 0;
+            qtime3 = 99999999;
+        }
+        else
+        {
+            qtimeeqptype3 = dr["QTimeEqpType3"].ToString();
+            qtimeseq3 = Convert.ToInt32(dr["QTimeSeq3"]);
+            qtime3 = Convert.ToInt32(dr["QTime3"]);
+        }
+        int isProcess = 1;
+        if (dr["RTDEqpType"].ToString() == "MEASURE" || dr["RTDEqpType"].ToString() == "Normal")
+            isProcess = 0;
+        if (dr["EqpType"].ToString() == "CUOXE")
+        {
+            CUOXELotsSum++;
+            if (dr["Recipe"].ToString().IndexOf("40KD-22") > -1)
+            {
+                CUOXELotsis40KD22Sum++;
+            }
+        }
+        data.Add(dr["FOUPID"] + " " + dr["Seq"] + " " + dr["Recipe"] + " " + dr["NumWafer"] + " " + dr["EqpType"] + " " + isProcess + " " + dr["AssignedPriority"] + " " + qtimeeqptype1 + " " + qtimeseq1 + " " + qtime1 + " " + qtimeeqptype2 + " " + qtimeseq2 + " " + qtime2 + " " + qtimeeqptype3 + " " + qtimeseq3 + " " + qtime3);
+    }
+    
+    dt = new DataTable();
+    
+    //PPID
+    dt = new DataView(dt_input_foup).ToTable(true, "PPID", "PPIDNumber", "FOUPID", "Seq", "Recipe", "EqpID", "EqpType", "ProcessTime", "AdvInhibitInMinute", "MinBatchWafers", "MaxBatchWafers", "BatchSize", "MinWaferCountPerBatch", "EqRecoveryStartTimeInMinute", "EqRecoveryEndTimeInMinute", "ChamberRequired");
+    data.Add("" + (dt.Rows.Count) + "");
+    foreach (DataRow dr in dt.Rows)
+    {
+        string[] chamberRequired = dr["ChamberRequired"].ToString().Split(':');
+        string[] chamberList = new string[] { "0", "0", "0", "0", "0", "0", "0", "0" };
+        if (dr["EqpType"].ToString() == "CUSTRIP" || dr["EqpType"].ToString() == "CUSOVT" || dr["EqpType"].ToString() == "CUNITINCVD" || dr["EqpType"].ToString() == "CUOXE"
+               || dr["EqpType"].ToString() == "CUSINE" || dr["EqpType"].ToString() == "CUMETE" || dr["EqpType"].ToString() == "CUPLATE" || dr["EqpType"].ToString() == "CUSPUT")
+        {
+            int j = 0;
+            foreach (string c in chamberRequired)
+            {
+                chamberList[j] = c;
+                j++;
+            }
+        }
+        //else
+        //{
+        //    dr["PPID"] = "0";
+       // }
+        data.Add(dr["PPID"] + " " + dr["PPIDNumber"] + " " + dr["FOUPID"] + " " + dr["Seq"] + " " + dr["Recipe"] + " " + dr["EqpID"] + " " + dr["EqpType"] + " " + dr["ProcessTime"] + " " + dr["AdvInhibitInMinute"] + " " 
+            + dr["MinBatchWafers"] + " " + dr["MaxBatchWafers"] + " " + dr["BatchSize"] + " " + dr["MinWaferCountPerBatch"] + " "
+            + dr["EqRecoveryStartTimeInMinute"] + " " + dr["EqRecoveryEndTimeInMinute"] + " " 
+            + chamberList[0] + " " + chamberList[1] + " " + chamberList[2] + " " + chamberList[3] + " " + chamberList[4] + " " + chamberList[5] + " " + chamberList[6] + " " + chamberList[7]);
+    }
+
+    //Transit time
+    data.Add("" + TRANSITTIME + "");
+    //Due date
+    data.Add("" + DUEDATE + "");
+    //Qtime urgent
+    data.Add("" + QTIMEURGENT + "");
+    //Qtime buffer
+    data.Add("" + QTIMEBUFFER + "");
+    data.Add("" + CUOXELotsSum + "");
+    data.Add("" + CUOXELotsis40KD22Sum + "");
+    //Write to file
+    using (StreamWriter writer = new StreamWriter(DATAFILE))
+    {
+        foreach (string line in data)
+            writer.WriteLine(line);
+    }
+}
+
+static bool InvokeCP()
+{
+    bool solutionFound = false;
+    OplFactory.DebugMode = false;
+    //ExceptionLog("No solution");
+    OplFactory oplF = new OplFactory();
+    OplErrorHandler handler = oplF.CreateOplErrorHandler();
+    OplModelSource modelSource = oplF.CreateOplModelSource("CUOXE_Short_QT.mod");
+    OplSettings settings = oplF.CreateOplSettings(handler);
+    OplModelDefinition def = oplF.CreateOplModelDefinition(modelSource, settings);
+    CP cp = oplF.CreateCP();
+    cp.SetParameter(CP.DoubleParam.TimeLimit, TIMELIMIT);
+    cp.SetParameter(CP.IntParam.Workers, WORKERS);
+    //cp.SetParameter(CP.IntParam.SearchType, CP.ParameterValues.DepthFirst);
+    OplModel opl = oplF.CreateOplModel(def, cp);
+    opl.Generate();
+
+    if (cp.Solve())
+    {
+        opl.PostProcess();
+        solutionFound = true;
+    }
+    else
+    {
+        ExceptionLog("No solution");
+    }
+    oplF.End();
+    return solutionFound;
+}
