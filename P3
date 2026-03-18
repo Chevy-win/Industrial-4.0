@@ -1,0 +1,282 @@
+ static void RemoveNotAvailableForDispatch()
+ {
+     dt_input_temp = dt_input.Copy();
+     DataTable dt1 = new DataTable();
+     DataTable dt2 = new DataTable();
+
+     // delete over advinhibit time lot
+     for (int i = dt_input.Rows.Count - 1; i >= 0; i--)
+     {
+         if (Convert.ToInt32(dt_input.Rows[i]["AdvInhibitInMinute"]) <= 0)
+                             dt_input.Rows[i].Delete();
+     }
+
+     dt_input.AcceptChanges();
+
+     Dictionary<string, string> dct_stopdispatchtime = new Dictionary<string, string>();
+     DataTable dt = new DataView(dt_input).ToTable(true, "StopDispatchTime");
+     foreach (DataRow dr in dt.Rows)
+     {
+         if (dr["StopDispatchTime"].ToString() != "")
+         {
+             string[] values = dr["StopDispatchTime"].ToString().Split(';');
+             foreach (string s in values)
+             {
+                 string[] time = s.Split(':');
+                 if (!dct_stopdispatchtime.ContainsKey(time[0]))
+                 {
+                     dct_stopdispatchtime.Add(time[0], time[1]);
+                 }
+             }
+         }
+     }
+
+     for (int i = dt_input.Rows.Count - 1; i >= 0; i--)
+     {
+         double stopdispatchtime = DUEDATE;
+
+         if ((dt_input.Rows[i]["EqpType"].ToString() == "CUSTRIP" || dt_input.Rows[i]["EqpType"].ToString() == "CUSOVT" || dt_input.Rows[i]["EqpType"].ToString() == "CUNITINCVD" || dt_input.Rows[i]["EqpType"].ToString() == "CUOXE"
+             || dt_input.Rows[i]["EqpType"].ToString() == "CUSINE" || dt_input.Rows[i]["EqpType"].ToString() == "CUMETE" || dt_input.Rows[i]["EqpType"].ToString() == "CUPLATE" || dt_input.Rows[i]["EqpType"].ToString() == "CUSPUT")
+             && dt_input.Rows[i]["ChamberRequired"].ToString() != "")
+         {
+             string[] chambers = dt_input.Rows[i]["ChamberRequired"].ToString().Split(':');
+             foreach (string c in chambers)
+             {
+                 if (dct_stopdispatchtime.ContainsKey(c))
+                 {
+                     double time = Math.Truncate(Convert.ToDateTime(DateTime.ParseExact(dct_stopdispatchtime[c], "yyyyMMddHHmmss000", CultureInfo.InvariantCulture)).Subtract(currentTime).TotalMinutes);
+                     time = time < 0 ? 0 : time;
+                     if (time < stopdispatchtime)
+                         stopdispatchtime = time;
+                 }
+             }
+         }
+
+         if (dct_stopdispatchtime.ContainsKey(dt_input.Rows[i]["EqpID"].ToString()))
+         {
+             double time = Math.Truncate(Convert.ToDateTime(DateTime.ParseExact(dct_stopdispatchtime[dt_input.Rows[i]["EqpID"].ToString()], "yyyyMMddHHmmss000", CultureInfo.InvariantCulture)).Subtract(currentTime).TotalMinutes);
+             time = time < 0 ? 0 : time;
+             stopdispatchtime = time;
+         }
+
+         if (stopdispatchtime <= 0)
+             dt_input.Rows[i].Delete();
+     }
+     dt_input.AcceptChanges();
+
+     //delete xRunPath Lot
+     dt1 = new DataView(dt_input).ToTable(true, "LotID");
+     foreach (DataRow dr in dt1.Rows)
+     {
+         dt2 = dt_input.Select(string.Format("LotID = '{0}'", dr["LotID"])).CopyToDataTable();
+         dt2 = new DataView(dt2).ToTable(true, "LotID", "Seq");
+         int actualStep = dt2.Rows.Count;
+         dt2 = dt_input_temp.Select(string.Format("LotID = '{0}'", dr["LotID"])).CopyToDataTable();
+         int totalStep = Convert.ToInt32(dt2.Compute("max([Seq])", string.Empty));
+         if (actualStep < totalStep) // get xRunPath lot which judge by step No
+             lst_xRunPathLots.Add(dr["LotID"].ToString());
+     }
+
+     dt = new DataTable();
+     if (dt_input.Select(string.Format("EqpID = '{0}'", "xRunPath")).Length > 0)
+         dt = dt_input.Select(string.Format("EqpID = '{0}'", "xRunPath")).CopyToDataTable();
+     var lots = dt.AsEnumerable().Select(s => new { id = s.Field<string>("LotID") }).Distinct().ToList();
+     foreach (var lot in lots)
+         lst_xRunPathLots.Add(lot.id);
+
+     foreach (string lot in lst_xRunPathLots)
+     {
+         var rows = dt_input.Select(string.Format("LotID = '{0}'", lot));
+         foreach (var row in rows)
+             row.Delete();
+     }
+     dt_input.AcceptChanges();
+
+     int reversePriority = 0;
+     int waitingtime = 0;
+     int assignedPriority = 0;
+     DataTable dt_temp = new DataTable();
+     dt1 = new DataTable();
+     dt2 = new DataTable();
+     List<Tuple<string, int, int>> lst_assignedPriority = new List<Tuple<string, int, int>>();
+     dt_temp = dt_input;
+     dt1 = new DataView(dt_temp).ToTable(true, "LotID", "Seq", "Recipe", "EqpType", "IsActive", "Priority", "WaitingTime", "NumWafer", "RQT1", "RQTSeq1", "RQT2", "RQTSeq2", "RQT3", "RQTSeq3", "Clip", "ScheduledLot");
+     dt2 = new DataView(dt_temp).ToTable(true, "EqpType", "Recipe");
+     foreach (DataRow dr in dt1.Rows)
+     {
+         if (dt_input.Select(string.Format("LotID = '{0}' AND Seq = 1", dr["LotID"].ToString())).Length > 0)
+         {
+             dt_temp = dt_input.Select(string.Format("LotID = '{0}' AND Seq = 1", dr["LotID"].ToString())).CopyToDataTable();
+             if (Convert.ToInt32(dt_temp.Rows[0]["RQTSeq1"]) == Convert.ToInt32(dr["Seq"]))
+                 dr["RQT1"] = Convert.ToInt32(dt_temp.Rows[0]["RQT1"]);
+             else
+                 dr["RQT1"] = 99999999;
+             if (Convert.ToInt32(dt_temp.Rows[0]["RQTSeq2"]) == Convert.ToInt32(dr["Seq"]))
+                 dr["RQT2"] = Convert.ToInt32(dt_temp.Rows[0]["RQT2"]);
+             else
+                 dr["RQT2"] = 99999999;
+             if (Convert.ToInt32(dt_temp.Rows[0]["RQTSeq3"]) == Convert.ToInt32(dr["Seq"]))
+                 dr["RQT3"] = Convert.ToInt32(dt_temp.Rows[0]["RQT3"]);
+             else
+                 dr["RQT3"] = 99999999;
+         }
+     }
+     foreach (DataRow dr in dt2.Rows)
+     {
+         dt_temp = dt1.Select(string.Format("EqpType = '{0}' AND Recipe = '{1}'", dr["EqpType"].ToString(), dr["Recipe"].ToString())).CopyToDataTable();
+         if (dt1.Select(string.Format("EqpType = '{0}' AND Recipe = '{1}' AND (RQT1 < 99999999 OR RQT2 < 99999999 OR RQT3 < 99999999)", dr["EqpType"].ToString(), dr["Recipe"].ToString())).Length > 0)
+         {
+             dt_temp = dt1.Select(string.Format("EqpType = '{0}' AND Recipe = '{1}' AND (RQT1 < 99999999 OR RQT2 < 99999999 OR RQT3 < 99999999)", dr["EqpType"].ToString(), dr["Recipe"].ToString())).CopyToDataTable();
+             dt_temp.DefaultView.Sort = "RQT1 ASC, RQT2 ASC, RQT3 ASC, Priority ASC, WaitingTime DESC, NumWafer DESC";
+             dt_temp = dt_temp.DefaultView.ToTable();
+             foreach (DataRow dr_temp in dt_temp.Rows)
+             {
+                 if (!dr_temp["EqpType"].ToString().Contains("CUOXE"))
+                     reversePriority = Convert.ToInt32(Math.Ceiling(10 - Convert.ToDouble(dr_temp["Priority"]))) * 10 + 100000;
+                 else
+                     reversePriority = Convert.ToInt32(Math.Ceiling(10 - Convert.ToDouble(dr_temp["Priority"]))) * 10;
+                 if (Convert.ToInt32(dr_temp["Seq"]) == 1 && !dr_temp["EqpType"].ToString().Contains("CUOXE"))
+                     reversePriority += 10000;
+                 if (Convert.ToInt32(dr_temp["ScheduledLot"]) == 1)
+                     reversePriority += 10000;
+                 if (Convert.ToInt32(dr_temp["Clip"]) == 1)
+                     reversePriority += 100;
+                 waitingtime = Convert.ToInt32(dr_temp["WaitingTime"]);
+                 if (waitingtime > 19)
+                     waitingtime = 19;
+                 waitingtime = Convert.ToInt32(Math.Truncate(waitingtime / 2.0));
+                 waitingtime = 0;
+                 assignedPriority = reversePriority + waitingtime;
+                 lst_assignedPriority.Add(new Tuple<string, int, int>(dr_temp["LotID"].ToString(), Convert.ToInt32(dr_temp["Seq"]), assignedPriority));
+             }
+         }
+         if (dt1.Select(string.Format("EqpType = '{0}' AND Recipe = '{1}' AND (RQT1 = 99999999 AND RQT2 = 99999999 AND RQT3 = 99999999)", dr["EqpType"].ToString(), dr["Recipe"].ToString())).Length > 0)
+         {
+             dt_temp = dt1.Select(string.Format("EqpType = '{0}' AND Recipe = '{1}' AND (RQT1 = 99999999 AND RQT2 = 99999999 AND RQT3 = 99999999)", dr["EqpType"].ToString(), dr["Recipe"].ToString())).CopyToDataTable();
+             dt_temp.DefaultView.Sort = "Priority ASC, WaitingTime DESC, NumWafer DESC";
+             dt_temp = dt_temp.DefaultView.ToTable();
+             foreach (DataRow dr_temp in dt_temp.Rows)
+             {
+                 reversePriority = Convert.ToInt32(Math.Ceiling(10 - Convert.ToDouble(dr_temp["Priority"]))) * 10;
+                 if (Convert.ToInt32(dr_temp["Seq"]) == 1 && !dr_temp["EqpType"].ToString().Contains("CUOXE"))
+                     reversePriority += 10000;
+                 if (Convert.ToInt32(dr_temp["ScheduledLot"]) == 1)
+                     reversePriority += 10000;
+                 if (Convert.ToInt32(dr_temp["Clip"]) == 1)
+                     reversePriority += 100;
+                 waitingtime = Convert.ToInt32(dr_temp["WaitingTime"]);
+                 if (waitingtime > 19)
+                     waitingtime = 19;
+                 waitingtime = Convert.ToInt32(Math.Truncate(waitingtime / 2.0));
+                 waitingtime = 0;
+                 assignedPriority = reversePriority + waitingtime;
+                 lst_assignedPriority.Add(new Tuple<string, int, int>(dr_temp["LotID"].ToString(), Convert.ToInt32(dr_temp["Seq"]), assignedPriority));
+             }
+         }
+     }
+     foreach (Tuple<string, int, int> t in lst_assignedPriority)
+         foreach (DataRow dr in dt_input.Rows)
+             if (t.Item1 == dr["LotID"].ToString() && t.Item2 == Convert.ToInt32(dr["Seq"]))
+                 dr["AssignedPriority"] = t.Item3;
+ }
+
+static void FOUPInput()
+{
+    dt_input_foup.Columns.Add("FOUPID", typeof(string));
+    dt_input_foup.Columns.Add("NumWafer", typeof(int));
+    dt_input_foup.Columns.Add("Seq", typeof(int));
+    dt_input_foup.Columns.Add("Entity", typeof(string));
+    dt_input_foup.Columns.Add("EqpID", typeof(string));
+    dt_input_foup.Columns.Add("EqpType", typeof(string));
+    dt_input_foup.Columns.Add("IsActive", typeof(int));
+    dt_input_foup.Columns.Add("AvailDispInMinute", typeof(int));
+    dt_input_foup.Columns.Add("AvailTimeInMinute", typeof(int));
+    dt_input_foup.Columns.Add("AdvInhibitInMinute", typeof(int));
+    dt_input_foup.Columns.Add("Priority", typeof(double));
+    dt_input_foup.Columns.Add("WaitingTime", typeof(int));
+    dt_input_foup.Columns.Add("AssignedPriority", typeof(int));
+    dt_input_foup.Columns.Add("Recipe", typeof(string));
+    dt_input_foup.Columns.Add("PPID", typeof(string));
+    dt_input_foup.Columns.Add("PPIDNumber", typeof(int));
+    dt_input_foup.Columns.Add("ChamberRequired", typeof(string));
+    dt_input_foup.Columns.Add("StopDispatchTime", typeof(string));
+    dt_input_foup.Columns.Add("ProcessTime", typeof(int));
+    dt_input_foup.Columns.Add("RTDEqpType", typeof(string));
+    //CUSOVT chemical change data
+    dt_input_foup.Columns.Add("CUSOVTNextCCStopTime", typeof(DateTime));
+    dt_input_foup.Columns.Add("CUSOVTNextCCStopInMinute", typeof(double));
+    dt_input_foup.Columns.Add("CUSOVTChemicalLifetime", typeof(double));
+    //dt_input_foup.Columns.Add("CUSOVTCCDuration", typeof(double));
+    dt_input_foup.Columns.Add("InQTime", typeof(bool));
+    dt_input_foup.Columns.Add("RQTEqpType1", typeof(string));
+    dt_input_foup.Columns.Add("RQTSeq1", typeof(int));
+    dt_input_foup.Columns.Add("RQT1", typeof(int));
+    dt_input_foup.Columns.Add("RQTEqpType2", typeof(string));
+    dt_input_foup.Columns.Add("RQTSeq2", typeof(int));
+    dt_input_foup.Columns.Add("RQT2", typeof(int));
+    dt_input_foup.Columns.Add("RQTEqpType3", typeof(string));
+    dt_input_foup.Columns.Add("RQTSeq3", typeof(int));
+    dt_input_foup.Columns.Add("RQT3", typeof(int));
+    dt_input_foup.Columns.Add("QTimeEqpType1", typeof(string));
+    dt_input_foup.Columns.Add("QTimeSeq1", typeof(int));
+    dt_input_foup.Columns.Add("QTime1", typeof(int));
+    dt_input_foup.Columns.Add("QTimeEqpType2", typeof(string));
+    dt_input_foup.Columns.Add("QTimeSeq2", typeof(int));
+    dt_input_foup.Columns.Add("QTime2", typeof(int));
+    dt_input_foup.Columns.Add("QTimeEqpType3", typeof(string));
+    dt_input_foup.Columns.Add("QTimeSeq3", typeof(int));
+    dt_input_foup.Columns.Add("QTime3", typeof(int));
+    dt_input_foup.Columns.Add("EqRecoveryStartTime", typeof(DateTime));
+    dt_input_foup.Columns.Add("EqRecoveryStartTimeInMinute", typeof(int));
+    dt_input_foup.Columns.Add("EqRecoveryEndTime", typeof(DateTime));
+    dt_input_foup.Columns.Add("EqRecoveryEndTimeInMinute", typeof(int));
+    dt_input_foup.Columns.Add("BatchSize", typeof(int));
+    dt_input_foup.Columns.Add("MaxBatchSize", typeof(int));
+    dt_input_foup.Columns.Add("MinWaferCountPerBatch", typeof(int));
+    dt_input_foup.Columns.Add("MinBatchWafers", typeof(int));
+    dt_input_foup.Columns.Add("MaxBatchWafers", typeof(int));
+    //dt_input_foup.Columns.Add("AllowSingleFOUPRun", typeof(int));
+    dt_input_foup.Columns.Add("IgnoreBatchSize", typeof(int));
+
+    DataTable dt1 = new DataView(dt_input).ToTable(true, "FOUPID", "Seq", "EqpID", "Recipe", "PPID");
+    foreach (DataRow dr1 in dt1.Rows)
+    {
+        DataTable dt2 = new DataTable();
+        if (dt_input.Select(string.Format("FOUPID = '{0}' and Seq = {1} and EqpID = '{2}' and Recipe = '{3}' and PPID = '{4}'",
+                dr1["FOUPID"].ToString(), Convert.ToInt32(dr1["Seq"]), dr1["EqpID"].ToString(), dr1["Recipe"].ToString(), dr1["PPID"].ToString())).Length > 0)
+        {
+            dt2 = dt_input.Select(string.Format("FOUPID = '{0}' and Seq = {1} and EqpID = '{2}' and Recipe = '{3}' and PPID = '{4}'",
+                dr1["FOUPID"].ToString(), Convert.ToInt32(dr1["Seq"]), dr1["EqpID"].ToString(), dr1["Recipe"].ToString(), dr1["PPID"].ToString())).CopyToDataTable();
+            int NumWafer = Convert.ToInt32(dt2.Compute("sum([NumWafer])", string.Empty));
+            int IsActive = Convert.ToInt32(dt2.Compute("min([IsActive])", string.Empty));
+            int AvailDispInMinute = Convert.ToInt32(dt2.Compute("max([AvailDispInMinute])", string.Empty));
+            int AvailTimeInMinute = Convert.ToInt32(dt2.Compute("max([AvailTimeInMinute])", string.Empty));
+            int AdvInhibitInMinute = Convert.ToInt32(dt2.Compute("min([AdvInhibitInMinute])", string.Empty));
+            double Priority = Convert.ToInt32(dt2.Compute("min([Priority])", string.Empty));
+            int WaitingTime = Convert.ToInt32(dt2.Compute("max([WaitingTime])", string.Empty));
+            int AssignedPriority = Convert.ToInt32(dt2.Compute("max([AssignedPriority])", string.Empty));
+            int CUSOVTNextCCStopInMinute = Convert.ToInt32(dt2.Compute("max([CUSOVTNextCCStopInMinute])", string.Empty));
+            double CUSOVTChemicalLifetime = Convert.ToInt32(dt2.Compute("max([CUSOVTChemicalLifetime])", string.Empty));
+            //int CUSOVTCCDuration = Convert.ToInt32(dt2.Compute("max([CUSOVTCCDuration])", string.Empty));
+            int IgnoreBatchSize = Convert.ToInt32(dt2.Compute("max([IgnoreBatchSize])", string.Empty));
+            int InQTime = Convert.ToInt32(dt2.Compute("max([InQTime])", string.Empty));
+            int RQT1 = Convert.ToInt32(dt2.Compute("min([RQT1])", string.Empty));
+            int RQT2 = Convert.ToInt32(dt2.Compute("min([RQT2])", string.Empty));
+            int RQT3 = Convert.ToInt32(dt2.Compute("min([RQT3])", string.Empty));
+            dt_input_foup.Rows.Add(dt2.Rows[0]["FOUPID"], NumWafer, dt2.Rows[0]["Seq"], dt2.Rows[0]["Entity"], dt2.Rows[0]["EqpID"], dt2.Rows[0]["EqpType"]
+                , IsActive, AvailDispInMinute, AvailTimeInMinute, AdvInhibitInMinute, Priority, WaitingTime, AssignedPriority
+                , dt2.Rows[0]["Recipe"], dt2.Rows[0]["PPID"], dt2.Rows[0]["PPIDNumber"], dt2.Rows[0]["ChamberRequired"]
+                , dt2.Rows[0]["StopDispatchTime"], dt2.Rows[0]["ProcessTime"], dt2.Rows[0]["RTDEqpType"]
+                , dt2.Rows[0]["CUSOVTNextCCStopTime"], CUSOVTNextCCStopInMinute, CUSOVTChemicalLifetime, dt2.Rows[0]["InQTime"]
+                , dt2.Rows[0]["RQTEqpType1"], dt2.Rows[0]["RQTSeq1"], RQT1
+                , dt2.Rows[0]["RQTEqpType2"], dt2.Rows[0]["RQTSeq2"], RQT2
+                , dt2.Rows[0]["RQTEqpType3"], dt2.Rows[0]["RQTSeq3"], RQT3
+                , dt2.Rows[0]["QTimeEqpType1"], dt2.Rows[0]["QTimeSeq1"], dt2.Rows[0]["QTime1"]
+                , dt2.Rows[0]["QTimeEqpType2"], dt2.Rows[0]["QTimeSeq2"], dt2.Rows[0]["QTime2"]
+                , dt2.Rows[0]["QTimeEqpType3"], dt2.Rows[0]["QTimeSeq3"], dt2.Rows[0]["QTime3"]
+                , dt2.Rows[0]["EqRecoveryStartTime"], dt2.Rows[0]["EqRecoveryStartTimeInMinute"], dt2.Rows[0]["EqRecoveryEndTime"], dt2.Rows[0]["EqRecoveryEndTimeInMinute"]
+                , dt2.Rows[0]["BatchSize"], dt2.Rows[0]["MaxBatchSize"], dt2.Rows[0]["MinWaferCountPerBatch"], dt2.Rows[0]["MinBatchWafers"], dt2.Rows[0]["MaxBatchWafers"]
+                , IgnoreBatchSize);
+        }
+    }
+}
