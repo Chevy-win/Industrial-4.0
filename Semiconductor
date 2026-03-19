@@ -87,3 +87,27 @@ Co/Ni remove           PME/NISOVT  Remove Unreacted Co/Ni Film    SC1+SPM+HPM   
 volatile memory : SRAM, DRAM; non-volatile Memory : mROM, EPROM, Flash; ASIC:MPU,CPU,Logic,u-Controller...; Mix-Signal:RF,Bluetooth, wireless, GPS...
 DOMA Dose Mapper 曝光计量图: is a scanner option which improves full wafer CDU(Critical Dimension Uniformity关键尺寸统一性) by adjusting the dose during a scan exposure. 
                             DOMA recipe is a DOSE(or energy) offset map for full wafer dose compensate. Prod + Layer + Mask + Immersion + ToolID + Date
+
+EDC Engineering Data Collection
+APC Advance Process Control
+MIRS Manufacturing Integrated Request System
+PRP Process Plan : Top plan is a flow which allowed product process from wafer start to wafer out, and it is consist of different subplan.
+				   Subplan is component of different steps.
+				   
+MIRS Top Plan Naming Rule:			
+				Poly Layer
+				   |Metal Layer
+				   |  | 1xDD Layer?
+				   |  |  |   Customer Code
+				   |  |	 |     | Major Change?	  
+				   |  |  |     |  |
+	X  L  2  2  C  1  6  4  B  D  A  0 . 0
+	|        |	|						 |
+	|		 |	|						Version
+	|		 |Fuc(F:Flash/C:CIS/H:HV/T:TSI&TSV)
+	|	 Tech(Gen)
+Process Loop
+
+(I)ASCAN/KSCAN/ISTEP/ADI/ADICD  ET:AEI/AEICD
+
+Prod Para Common Use : Mask Version, Measure PPID, Some measure SPEC, Technology, Customer, Mask Layer, Step, Feed Table, Formula, EDC Plan.
