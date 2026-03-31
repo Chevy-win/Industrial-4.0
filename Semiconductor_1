@@ -1,0 +1,351 @@
+
+Oxidation 			氧化
+Diffusion 			扩散
+CVD 				化学气相沉积
+Photo Lithography 	微显影
+Etching 			刻蚀
+Ion Implantation 	离子注入
+Metalization 		金属化 --Sputtering 金属溅镀
+Chemical Mechanical Polishing  	化学机械研磨
+
+FOUP : Front Opening Unified Pod
+Most Important Column : Product ID, TopPlan, LotID, Qty, Stage, Area, Entity, PPID, StepHandle...
+
+EDC Engineering Data Collection
+APC Advance Process Control
+MIRS Manufacturing Integrated Request System
+PRP Process Plan : Top plan is a flow which allowed product process from wafer start to wafer out, and it is consist of different subplan.
+				   Subplan is component of different steps.
+				   
+MIRS Top Plan Naming Rule:			
+				Poly Layer
+				   |Metal Layer
+				   |  | 1xDD Layer?
+				   |  |  |   Customer Code
+				   |  |	 |     | Major Change?	  
+				   |  |  |     |  |
+	X  L  2  2  C  1  6  4  B  D  A  0 . 0
+	|        |	|						 |
+	|		 |	|						Version
+	|		 |Fuc(F:Flash/C:CIS/H:HV/T:TSI&TSV)
+	|	 Tech(Gen)
+Process Loop
+
+(I)ASCAN/KSCAN/ISTEP/ADI/ADICD  ET:AEI/AEICD
+
+Common Use : Mask Version, Measure PPID, Some measure SPEC, Technology, Customer, Mask Layer, Step, Feed Table, Formula, EDC Plan.
+
+Basic Process Flow Structure
+Isolation : 1.STI(Shallow Trend Isolation); 2. N/P Well
+Transistor: 1. GOX,POLYE(Gate); 2. LDD, S/D;
+Interconnect: 1. Salicide; 2. Contact; 3. MET/MVIA;
+Passivation: PAD;
+LDD : Light Dope Drain 轻掺杂漏极是在MOSFET 源/漏与沟道之间做一段“较浅、较轻”的掺杂延伸区（source/drain extension）
+
+Turn Ratio (TOR) = Move / WIP
+
+Cycle Time : Measure the speed of wafer run in Fab; = Number of Days in Fab / Number of Photo Layers Run;
+	E.g. Wafer Out - Wafer Start = 30 Days, and Process Flow  =  consists of 23 Photo Layers, then Cycle Time  = 30/23 = 1.304
+	
+Line Balance : Wafer Start(Front) = Wafer Start(Back) = Wafer Out
+	
+						  --AMHS
+						 |
+Auto 3 Mode :  RTD ---- AM  --MES
+						 |
+						  --EAP
+MES : Manufacturing Execution System is a term used to describe systems that track and manage all aspects of a job in real time while it is in the execution phase 
+or in process. It may include resource management, capacity scheduling, maintenance management, statistical quality control, laboratory information management, process
+management, data collection, plant wide document management and process optimization.
+制造执行系统（MES）是指在作业执行阶段或过程中实时跟踪和管理作业各个方面的系统。
+它可能包括资源管理、产能调度、维护管理、统计质量控制、实验室信息管理、流程管理、数据收集、全厂文档管理和流程优化。
+	1. Collect various data from factory - Status of material, product and equipments; 
+	2. Provide real time and accurate information;
+	3. Data consolidation and analysis;
+	4. Assist manager making right decision;
+I : Resource management include FOUP Mgt., Labor Mgt., WIP Tracking, EQP Mgt., Recipe Mgt., Reticle Mgt.;
+II: Quality management include Q-Time, EQP contamination, OCAP, SPC, Engineering Data Collection, Spec Mgt.;
+
+(1)Work In Process Tracking : 管理Fab内所有的Lots，在设定好process flow和Fab资源环境后，WIP Control便能够依据事先的设定来执行对Lots的管控，同时记录详实的生产记录，以方便后续其他模组进行生产分析，统计制程管理，订单追踪等。
+(1.1)Process Flow : A specification of the steps needed to manufacture a product. Traditional shop floor control is usually specified in a structured document system in which a printed copy of the process-flow specification,
+	called a run-card, accompanied a wafer lots as it moved between different fabrication equipment. EQP operators follow the instructions on the run-card to process the wafer lot.
+	...--> Back Side Clean --> PR coating --> Exposure --> Alignment Check --> Etch --> ...
+	Top Plan(process) : One product need to be assigned to a Top Plan; Sub-Plan(Layer) : Per Photo Layer, Per Module Area has a Sub-Plan; Step : Define Physical process step, EQP Type & Recipe & Reticle & EDC Plan
+
+	Product Flow ----> Top-Plan|Sub-Plan|Step ----> Wafer Out
+										   |
+										   |
+										   v 
+								JP -> JI(EQ data collection) -> JO
+(1.2) Hold / Release Lot : Hold function is used to stop processing for a lot, no other tracking function can be performed against a lot that has been hold. Release lot from hold status.
+
+(1.3) Split / Merge : Create child lot(s) by splitting out some wafer from a selected lot. The original lot becomes the parent lot. Merge function is primarily used to merges lots that 
+	having the same product ID, plan ID and are at the same process step. Lots to be merged do not have to have any parent-child relationship.
+   Mother Lot :	Step A --> Step B --> Step C --> Step D --> ...
+				  |						          ^
+				  |Split 						  |Merge
+            	  v 							  |
+   Child Lot :	Step A --> Step B --> Step C -->
+
+
+(2) EQP & Recipe Management
+			Equipment HierarChical
+			          |
+		---------------------------------
+		    |						|
+		EQP Type 				 EQP Type               EQP Type Layer : CUMETE
+            |					    |
+		 EQP ID					 EQP ID					EQP Layer	   : CUMETE-01
+		  |							|
+		  |--Chamber   			    |--Chamber  
+		  |							|					Sub-EQP Layer  : Chamber : CUMETE-01A/B/C/D 
+		   -- Load Port              -- Load Port						 Port : CUMETE-01-1/2/3
+	
+(2.1) State model of EQP : Total Time 
+								|----------------------------------|
+								|								   |
+							Operations Time					Non-Scheduled Time : Outside of the normal factory production schedule. Includes time when the factory is not operating and when EQP is being used for unproductive event.
+							    |
+								|--Up Time
+								|	  |--Manufacturing Time 
+								|	  |			|--Produtive : Cover the time spent by the EQP in performing its inteded function. Includes loading and unloading time;
+								|     |			|--Standby   : Cover the time for the EQP is waiting to enter the Productive State;
+								|	  |
+								|     |--Engineering : Cover the time for process and EQP engineering purposes, such as process or EQP experiment or software qualification;
+								|	  
+								|--Down Time
+									  |--Unscheduled Down Time : for unplanned down time activity, such as maintenance, setup, conversion, change of consumables, factory related issue, etc.
+									  |--Scheduled Down Time   : for planned down time activity, such as preventive maintenance, setup, conversion, change of consumables, factory related issue, etc.
+
+									  
+Standby Time 		SB_NoTech   : Waiting for operator
+					SB_NoWip	: No WIP/reservation for high priority lot/Batching...
+					SB_NoTool	: No reticle/No recipe/No dummy wafer/Wait for results for test...
+
+Productive Time     PD_Run		: Regular Production
+
+Engineering Time	EG_EngTime	: Occupy by Process/EQP/Automation Engineer 
+
+Schedule Down Time	SD_Wait		: Delay for maintenance
+					SD_Monitor	: Monitoring
+					SD_PM		: PM/Post PM verification
+					SD_Down		: Change of consumables/chemicals
+					SD_Setup	: EQP Setup
+					SD_FacDown	: Supply/Utilty/CIM schedule down
+
+Unschedule DownTIme UD_Wait		: Delay for maintenance
+					UD_Monitor	: Monitoring
+					UD_Down 	: EQP down/ Repaire /Faulty product(产品缺陷)/Erroneous operations
+					UD_FacDown	: Supply/Utilty/CIM schedule down
+Non-Schedule Time   NS_OFF		: EQP shutdown/training/EQP retrofit(改造)
+
+
+
+
+(2.2). EQP Capability : is used when need to control different capability for same EQP type, e.g. ISTEP for back end and front end.
+(2.3). EQP Constraint : is used when need to set restriction on EQP or Lots.
+(2.4). EQP Recipe Mgt : Convert recipe name defined in MES process flow to its respective recipe ID in EQP; Recipe status control : Hold / Release;
+		Recipe Defined in MES 		|		PPID in EQP        |		Required Chamber
+											L12K-R30_A						Chamber A
+											L12K-R30_B						Chamber B
+			L12K-R30						L12K-R30_C						Chamber C
+											L12K-R30_AB						Chamber A, Chamber B
+
+(3) Reticle Management : Control and trace reticle location and status, and trigger reticle inspection(by usage and count/time);
+
+(4)FOUP Management : Life Cycle control (clean and life span); Lots Assocication: assigning/ releasing / exchanging;
+
+(5)Engineering Data Collection & Spec Management 
+	(5.1) EDC Plan : Collection of EDC specification or Derived specification, and Assign EDC plan to step.
+		EDC Specification: DC item, and specifications contril;
+		Derived Specification : Derived DC item; support complex user defined formula; specification control;
+		
+(6) SPC : Statistical Process Control is a powerful tool in detecting abnormal and  achieving process stability and improving capability through the reduction of variablity;
+		  统计过程控制是检测异常、实现过程稳定性和通过降低变异性来提高能力的有力工具。
+
+(7) OCAP : Out of Control Action Plan include hold lots, hold EQP, hold chamber;
+
+(8) EQP Contamination Management : is used to prevent EQP contamination by controlling contaminaing EQP, clean contaminated EQP and possible contaminated EQP;
+
+		---->    KSCAN	 		---->			SOVT 			---->			PADOX 		----> 	...
+				   |							  |								   |
+			 Lot will raise a 				This flag will be reset			Lot can be JP/JI at PADOX
+			 contamination flag 			after JO form SOVT				cause there is no comtamination issue
+			 after JI at KSCAN
+
+(9) Q-Time Management : to control the wait time limitation between process operations because some operation needs to move lots into EQP within predefined time.
+						otherwise lot can have defects caused by chemical reaction.  It's Lot next JI - last JO.
+
+(10) Season Condition : Current Recipe + Previouse Recipe + Lot Type + Idle Time/No Idle Time
+	Do not allow to Job In if : NPW result is expired; NPW result is OOS/OOC; Usage Meter(WAFER_COUNT, RFON_TIME) exceed limit without monitor; PM without monitor
+
+EAP : Equipment Autimatio Program
+		CIM System    <---->    EAP    <---->    EQP
+								 |
+							A program that link EQP to CIM Systems. Automating EQP run by command issuing to EQP; Collecting data from EQP, and pass to CIM system.
+
+(1)Operation Scenario of Runing a lot
+									   |--Check if this lot was job prepared to this EQP 
+					Lot Verification - |--Check the correctness of Slot Mapping Status
+							|		   |--Check if Recipe exsit in EQP 
+							|
+							|		   |--Perform MES Job In
+					Activate Process - |--Select Recipe
+							|		   |--Start to process
+							|
+							|
+					Monitor Process  - |--Monitor EQP
+							|		   |--Collect process/measurement data
+							|
+							|		   |--Check processed wafer count
+				Post Process Handling- |--Input data to CIM system
+									   |--Perform MES Job Out
+									   
+(2)EQP Major Functions :
+	1. Verify Lot's correctness - Lot ID, Slot Mapping, Recipe;
+	2. Auto Job In;
+	3. Auto select Recipe;
+	4. Auto activate process;
+	5. Auto process/measurement data collecton;
+	6. Verify processed wafer count;
+	7. Auto Job Out;
+	8. If any abnormal issue during process, EAP will auto Lot Hold in MES;
+
+(3) EQP Communication Protocol between EQP and EAP
+	SECS : Semiconductor Equipment Communication Standard
+				--------------------
+			   |		EAP			|
+			   |--------------------|
+			   |  SECS II Meassage	|  ----> Massage Layer : SECS II defines the method of conveying info between EQP and Host in the form of messages;
+			   |--------------------|
+			   |  SECS I |   HSMS   |  ----> Transfer Layer : SECS I/HSMS defines the method of transferring SECS II message;
+			    --------------------
+			  RS0232|		  | Ethernet
+					|		  |
+					    EQP  
+						
+(4) EAP Scenario - Lot Verification
+		EQP								EAP 						MES
+		 |	FOUP Arrival				 |							 |    ---------------- Lot Verification
+		 |	Port ID = 1	FOUP ID = F01	 |							 |
+		 |  -------------------------->	 |							 |
+		 |								 |	  Query Lot Info		 |
+		 |								 |	  FOUP ID : F01			 |
+		 |								 | ------------------------> |
+		 |								 |	  Query Lot Info Reply	 |
+		 |								 |	LotID=A, Qty=12,         |
+		 |								 |  SLOTMAP='111011100..'    |
+		 |								 |  StepID=S1,EQPID=,Recipe=,|
+		 |								 | <-----------------------	 |
+		 |						 Verify Lot Info					 |
+		 |								 |							 |
+		 |	 Process with Carrier LP=1	 |							 |
+		 |	<--------------------------	 |							 |
+		 |								 |							 |
+	 Dock FOUP							 |							 |
+  Scan Wafer Mapping                     |							 |
+		 |								 |							 |
+		 |  Wafer Mapping Completed      |							 |
+		 |  Load Port ID = 1			 |							 |
+		 |	Wafer Mapping = '111011100..'|							 |
+		 |  -------------------------->	 |							 |
+		 |						Verify Wafer Mapping				 |
+		 |								 |							 |
+		 |	  Process with Carrier LP=1	 |							 |
+		 |	<--------------------------	 |							 |
+		 |								 |							 |     ---------------- Active Process
+		 |								 |  Job In : Lot ID = A      |
+		 |								 | ------------------------> |
+		 |								 |							 |
+		 |  Create Process Job			 |							 |
+		 |  Process Job ID=PJ003		 |							 |
+		 |  FOUPID=F01,Recipe=R003,		 |							 |
+		 |  Slot = 1,2,3,5,6,7...		 |							 |
+		 |	<--------------------------	 |							 |
+		 |  Create Control Job			 |							 |
+		 |  Control Job ID=CJ003		 |							 |
+		 |  Process Job ID=PJ003		 |							 |
+		 |	<--------------------------	 |							 |
+		 |								 |							 |     ---------------- Monitor Process
+	Processing							 |							 |
+		 |  Control Job Start		     |							 |
+		 |  Control Job ID=CJ003		 |							 |
+		 |  -------------------------->	 |							 |
+		 |  Process Job Start		     |							 |
+		 |  Process Job ID=PJ003		 |							 |
+		 |  -------------------------->	 |							 |
+		 |  Wafer Start : WaferID=W1     |							 |
+		 |  -------------------------->	 |							 |
+		 |  Process Data				 |							 |
+		 |  WaferID=W1, Temperature=...	 |							 |
+		 |  -------------------------->	 |							 |
+		 |  Wafer Completed : WaferID=W1 |							 |
+		 |  -------------------------->	 |							 |
+		 |		     ...				 |							 |
+		 |		     ...				 |							 |
+		 |  Wafer Completed : WaferID=W7 |							 |
+		 |  -------------------------->	 |							 |
+		 |  Process Job Completed		 |							 |
+		 |  Process Job ID=PJ003		 |							 |
+		 |  -------------------------->	 |							 |
+		 |  Control Job Completed		 |							 |
+		 |  Control Job ID=CJ003		 |							 |
+		 |  -------------------------->	 |							 |
+		 |								 |							 |
+		 |					  Check Processed count					 |
+		 |								 |							 |
+		 |								 |	 Send Process Data       |
+		 |								 |   LotID=A,...			 |
+		 |								 | ------------------------> |
+		 |								 |   Job Out : LotID=A		 |
+		 |								 | ------------------------> |
+		 |	Carrier Out : FOUPID=F01     |							 |
+		 |	<--------------------------	 |							 |
+   Undock FOUP							 |							 |
+		 |  FOUP Unlocked:FOUPID=F01	 |							 |
+		 |  -------------------------->	 |							 |
+	FOUP Remove
+		 |  FOUP Removed:LOAD PORT ID=1  |							 |
+		 |  -------------------------->	 |							 |
+		 |								 |							 |
+		 
+(5) EQP Control Mode
+		Control Mode    Connection		Sent out Data & Event to EQP    Control by EAP
+		Offline			    F						  F 					    F
+		Online-Local        T 						  T 						F
+		Online-Remote		T 						  T 						T
+		
+
+AMHS: Automated Material Handling System
+	I : Provide the safe store environment for wafers and reticles.
+	II: Assist the wafers and reticles be delivered to the right place at right time automatically and speedily and safely.
+	
+(1) Stocker : is a safety temporary storage area, and close to bay, easy to carry out to process EQP. Wafer Stocker & Reticle Stocker ; General Stocker & Tower Stocker;
+(2) OHS : Over Head Shuttle is a transport EQP that travels on the clean room ceiling with linear motors. It travels for interbay transportation cleans room or between multiple clean rooms
+		  Achieves high handling volume and quick-turn around time from bay to bay.
+(3) OHT : Over Head Transfer is a transport EQP that travels on the ceiling to transport directly between a stocker and production EQP with linear motors.	
+		  Archeves high handling volume and quick-turn around time from tool to tool by direct transportation.
+		  
+RTD : Real Time Dispatcher decide which lot is the best for the EQP 
+	  Based on 1.Lot Priority, 2.Stay Time, 3.Remain Q-Time, 4.Critical Ratio((CLIP-NOW)/Remain Layer), 5.APC, 6.EQP Season, 7.EQP Loading Balance, 
+	  8.Process Setup Time, 9.Batch Loss, 10.Line Balance, 11.Same Recipe...
+
+AMAS : Advance Manufacturing Assist System
+AM  : Activity Manager
+
+APC : Advanced Process Control includes Run-to-Run R2R control & FDC Fault Detection & Classification/Control
+	1. R2R control is strategy for controlling peocessed using measurement results from upstream and downstream metrology/processes
+	一种“批次到批次”的控制策略，会利用上游与下游的量测/制程结果（metrology 数据）来调整下一批（下一片/下一lot）在设备上的设定值（recipe setpoint），以减少偏差
+	2. Feed-Forward Control compensates for variations in incoming material;
+	前馈控制（Feed-Forward）用来补偿“来料/输入条件”的波动。也就是在你开始加工之前，就根据上游量测到的来料差异，先把本步骤的参数做预补偿。
+	典型“来料变化”包括：膜厚、应力、前层CD、前道overlay、incoming wafer temperature、前段刻蚀残留等
+	3. Feedback Control adjusts process model to compensate for process variation. compensates for process drift.
+	反馈控制（Feedback）会根据加工后的结果，更新/修正制程模型或控制器参数，以补偿制程波动，尤其是制程漂移（drift）（例如设备老化、腔体污染、灯源衰减、耗材变化导致的慢性偏移）
+	4.FDC用设备过程信号“及时发现异常，避免失控或错误补偿”。
+
+  E.g. 光刻（Litho）里的 APC / R2R
+	控制目标：CD（线宽/孔径）、overlay、focus/dose、OPC残差等
+	Feed-forward：根据上游膜厚（ARC/PR厚度）、前层topography、前道CD偏差，预先调整曝光 dose/focus 或 scanner 的补偿项。
+	Feedback（R2R）：根据下游 CD-SEM 量测结果，更新下一lot的曝光剂量（dose）或focus offset，补偿灯强变化、镜头污染、track波动等漂移。
+
+RCMS Recipe Control & Management System	
