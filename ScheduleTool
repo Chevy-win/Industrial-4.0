@@ -122,3 +122,15 @@ rqtViolationUrgent 统计了所有紧急Q-time任务和已超时任务的Q-time�
 对于已超时任务，违例量乘以100，极大加重惩罚。尽量让Over Qtime的任务先排
 该变量通常用于目标函数，鼓励模型优先调度紧急Q-time任务，极力避免Q-time超时。
 
+example III：
+dexpr int totalCycleTimeActive =   	
+      sum(t in Tasks: 
+			t.seq != 0 
+			&& t.isprocess == 1 
+			&& matchAt(t.eqptype, "CAROZ") == -1 
+			&& t.seq == 1 
+			&& IsActive[t.foup] == 1
+		) (endOf(tasks[t]));
+对所有“激活、首工序、加工任务、非CAROZ设备”的任务，统计其结束时间，并累加。
+这个总和通常用于衡量所有激活Foup的首工序完成的总时间，可反映生产线的吞吐量或平均周期时间。
+
