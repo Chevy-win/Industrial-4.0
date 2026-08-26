@@ -1,0 +1,125 @@
+一、什么是半导体 MES？
+MES（Manufacturing Execution System，制造执行系统）是连接企业计划系统与现场设备的生产执行平台，主要负责：
+
+接收 ERP、APS、CPLEX 等系统产生的生产计划
+管理 Lot、晶圆、批次和工序流程
+指示产品下一步应该去哪里生产
+记录实际生产过程、设备状态和质量数据
+对异常进行管控和追踪
+将现场实际结果反馈给计划和管理系统
+可以简单理解为：
+
+ERP 决定“要生产什么、生产多少”；
+APS/CPLEX 决定“什么时候、在哪台设备生产”；
+MES 决定“现场如何执行，并记录实际发生了什么”。
+
+半导体工厂中，MES通常不只是传统意义上的“生产报工系统”，而是同时承担：
+
+Lot Dispatch
+WIP Tracking
+Route Control
+Equipment Control
+Process Control
+Recipe Control
+Quality Traceability
+Electronic Run Card
+Hold/Release 管控
+自动化搬运协调
+
+2.Lot 是半导体生产中最主要的生产批次单位。
+MES需要管理：
+Lot ID - 产品型号-批次数量-当前工序-当前状态/当前所在位置/当前设备/已完成工序/下一道工序/生产优先级/Hold 状态/良率和质量状态
+3.3. Equipment
+MES需要维护设备的生产状态，例如：
+Idle/Run/Down/PM/Engineering/Setup/Hold/Standby/Unscheduled Down
+同时管理：
+设备能力/可生产产品/工艺资格/Recipe 能力/设备优先级/设备维护状态/设备实时信号/设备产能和效率
+4. Process / Operation / Step
+半导体工艺通常由大量工序组成，例如：
+清洗 → 氧化 → 光刻 → 蚀刻 → 薄膜 → CMP → 检测 → 切割 → 封装 → 测试
+MES要管理：
+工艺流程 Route/工序 Step/前后工序关系/可跳过工序/Rework 流程/Hold 点/抽检要求/工艺参数/检验规格/设备限制
+5. Recipe
+Recipe 是设备执行某一工艺时使用的参数集合。
+MES通常需要控制：
+Recipe ID/Recipe Version/Recipe 适用产品/Recipe 适用工序/Recipe 适用设备/Recipe 参数版本/Recipe 是否已审核/Recipe 是否被修改/实际运行使用的 Recipe
+
+6.产品与工艺流程管理
+管理产品和工艺基础资料：
+Product/Process Route/Operation/Recipe/Process Parameter/Specification/Quality Rule/Rework Route/Sampling Rule
+
+7.WIP 追踪
+MES需要实时回答：
+
+某个 Lot 现在在哪里？
+当前处于哪道工序？
+已经等待了多久？
+下一步应该去哪里？
+是否超过最大等待时间？
+是否卡在设备、检验或物料？
+是否满足下一工序的生产条件？
+
+8.Dispatch 与派工
+MES根据计划、设备状态和现场规则，决定：
+哪个 Lot 可以生产
+Lot 应该送到哪台设备
+生产顺序是什么
+是否满足设备资格
+是否满足物料和质量条件
+是否需要优先处理某些 Lot
+MES的派工规则可能包括：
+
+交期优先
+Hot Lot 优先
+FIFO
+最短剩余加工时间
+瓶颈设备优先
+换线最少
+工艺等待时间优先
+关键路径优先
+
+9.Process Control 与质量管理
+MES不仅记录“做没做”，还要记录“做得是否正确”。
+
+常见功能包括：
+SPC/FDC（Fault Detection and Classification）/APC（Advanced Process Control）/工艺参数监控/量测结果管理/OOC / OOS 检测/缺陷管理/质量 Hold/NCR/CAPA/Wafer Map/Yield Management
+常见质量异常：
+关键参数超出控制界限/设备报警/Recipe 版本错误/工艺时间超限/等待时间超过规范/量测结果异常/Lot 混料/操作流程错误
+
+10.Hold / Release 管理
+Lot 可能因为不同原因被 Hold：
+工艺异常/设备异常/质量异常/物料异常/工程确认/客户要求/量测结果等待/Recipe 问题/设备维护
+
+11.追溯管理
+半导体产品对追溯要求很高。MES应能够查询：
+
+产品 → Lot → Wafer → 工序 → 设备 → Recipe → 操作员 → 参数 → 检验结果
+例如发生客户投诉时，需要回答：
+这个产品经过了哪些设备？
+使用哪个 Recipe？
+哪个时间生产？
+当时设备状态如何？
+使用了哪个材料批次？
+哪些操作员参与？
+生产参数是否异常？
+是否与其他异常 Lot 共用设备？
+
+12.半导体 MES 的关键数据事件
+MES通常围绕事件驱动运行：
+Lot Created
+Lot Released
+Lot Dispatched
+Lot Arrived
+Setup Started
+Process Started
+Process Completed
+Lot Moved
+Lot Hold
+Lot Released from Hold
+Lot Split
+Lot Merge
+Lot Scrapped
+Equipment Down
+Equipment Up
+Recipe Changed
+Inspection Completed
