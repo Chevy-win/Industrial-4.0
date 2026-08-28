@@ -123,3 +123,19 @@ Equipment Down
 Equipment Up
 Recipe Changed
 Inspection Completed
+
+---------------------
+Reticle ： 1.LOT到站：检查有效EQP，检查光阻配置，检查track机限，检查scanner机限，EQP热板和ADH温度；  2.查光罩； 3.就近STK传送；  
+
+MCP 与传统 API、插件、Function Calling 的区别
+技术	              主要作用
+API	                提供某个系统的程序化访问接口
+Function Calling	  让模型根据定义调用函数
+插件系统            	为特定 AI 应用扩展功能
+MCP	                用统一协议把工具、资源和提示能力提供给不同 AI 应用
+可以这样理解：
+API：某个系统本身提供的接口；
+Function Calling：模型调用函数的方式；
+MCP：把外部系统能力标准化暴露给 AI 应用的协议；
+MCP Server：通常是 API 与 AI 应用之间的适配层。
+MCP 并不是取代 API，而是对 API 进行封装和标准化，使 AI 更容易发现、理解和调用这些能力。
