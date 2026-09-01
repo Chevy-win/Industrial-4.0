@@ -124,6 +124,13 @@ Equipment Up
 Recipe Changed
 Inspection Completed
 
+Pilot:
+The production lot which is chosen for first running at the equipment whose PM be completed and the monitoring result is OK. 
+To confirm the performance of equipment after PM, we need checking not only the monitoring result, but also the measurement result of product.
+
+LS : 
+Constraint : 1. Normal constraint; 2.APC; 3.vertical constraint; 4.temp change cost; 5.advance inhibit/recipe setup; 6.tool/unit status; 7.DOMA path setup.
+Target 1.min reticle change cost; 2. same track recipe; 3.min temp change;
 ---------------------
 Reticle ： 1.LOT到站：检查有效EQP，检查光阻配置，检查track机限，检查scanner机限，EQP热板和ADH温度；  2.查光罩； 3.就近STK传送；  
 
