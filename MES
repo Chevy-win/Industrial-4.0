@@ -132,8 +132,11 @@ LS :
 Constraint : 1. Normal constraint; 2.APC; 3.vertical constraint; 4.temp change cost; 5.advance inhibit/recipe setup; 6.tool/unit status; 7.DOMA path setup.
 Target 1.min reticle change cost; 2. same track recipe; 3.min temp change;
 ---------------------
-Reticle ： 1.LOT到站：检查有效EQP，检查光阻配置，检查track机限，检查scanner机限，EQP热板和ADH温度；  2.查光罩； 3.就近STK传送；  
-
+Reticle ： 
+1.LOT到站：检查有效EQP，检查光阻配置，检查track机限，检查scanner机限，EQP热板和ADH温度；  2.查光罩； 3.就近STK传送；  
+Need to consider : 
+1.高等级LOT; 2.EQP IDLE; 3.同一个track recipe或recipe group能连跑的数量；4.WIP loading balance；5. recipe setup change cost；6.Non-Flexiable EQP first;7.APC Pilot.
+---------------------
 MCP 与传统 API、插件、Function Calling 的区别
 技术	              主要作用
 API	                提供某个系统的程序化访问接口
