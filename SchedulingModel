@@ -57,3 +57,48 @@ B&B 是精确算法的框架，典型用于整数规划或组合优化：
 你的模型约束极为复杂（如任务顺序、QTime、noOverlap、alternative、presence等），这些约束在GA/SA中很难高效表达和维护。
 传统GA/SA对强约束调度问题（如半导体生产、车间调度）通常效果不如专用的CP/ILP/调度优化器（如CPLEX/OR-Tools）。
 你需要花大量精力设计可行解生成器、约束修复机制，否则大部分解都是不可行的。
+
+Serial Mode ： FOUP1 run结束后runFOUP2； Parallel Mode： FOUP1&2同时run
+
+前段（CUOXE/CUSOVT/CUSTRIP）把表面变“干净且可镀” →
+中段（CUALLOY/CUSPUT）建立“可靠底层与导电种子” →
+后段（CUPLATE）把铜结构“镀到所需厚度与品质”。
+CUOXE(3) - CUSOVT(2) - CUSTRIP(10) - CUALLOY(13) - CUSPUT(8) - CUPLATE
+   |       |
+CUSINE  CUSILPE
+1.多个站点存在Alternative Step，并且有的Main Step与 Alternative Step所要经过的机台站点数量不同。目前已有自动转换配置和IUI供课长和DL根据情况进行手动转换，
+但这些方法都无法根据CUOXE上游Flow In未到来前和Loop内机台当下状态来自动判断是否要转换到Alternative Step,平衡Main Step和Alternative Step产能，最大化机台利用率. entity / recipe convert
+2. CUSOVT：Need chemical change per 5 hrs
+LOT角度：根据产品process flow获取当前已经进入Loop或即将进入Loop的产品的Q-Time数据和每一step的require capability，后续判断产品在每一步的机台上可不可派（PPID，PM，机限等）
+EQP角度：获取Loop会用到的EQP，获取每个机台(chamber)的可用时间，比如CUSOVT每五小时要换酸一次，就要根基EQP attribute中的换酸时间预估下一次时间，获取其可用时间段； 最久24小时
+Task角度：从可派lot结合其Q-Time Loop信息，拆解在每一步RQT；
+
+决策变量：interval Task；interval assignment in available time (size as PPID process tiem);  sequence Tools & Chambers 
+目标函数：1. 优先排over or near over的任务； 2.其次派在loop内不紧急的lots；3.再次排即将进入loop的lots；4.优先使用idle chamber； 5.计算total cycle time 最小化 (（by lot priority）
+
+New EQP
+UAM - Tool JP behavior follow ? 
+EAP - APC setting ? No APC 
+RTD - RTD rule to maximize productivity ? Same with CAROZ-15
+3. Advance season & Monitor	
+Advance eason - by idle time / lot count / recipe ? within 1hours no season , out 1hours season 1pcs .
+Monitor
+- PMM adhoc / event trigger adhoc / fix time adhoc / dynamic adhoc ? (PMM adhoc、fix time adhoc )
+- Monitor frequency ?(ER 4days ,PA 5days )
+- Monitor behavior need change Foup ? No change Foup
+- New tool expect start monitor date ? 15th/08/2024
+4. Tool Automation	
+- Clean coat / Chemical change ?
+Chemical auto change	
+
+
+APF .report 的 XML 本身不是速度快的根本原因。其高效主要来自：
+XML 是声明式流程描述，而不是普通解释执行代码；
+报告在保存或部署时存在编译过程；
+底层由专门的 APF Server Engine 执行；
+通过 Adapter 和 Repository 提前集成、整理生产数据；
+采用事件驱动和局部处理，而非频繁全量扫描；
+内置半导体生产领域的 Block、Macro、RTD 和调度功能。
+相较于用 Python、Java、C# 从头开发，APF 的核心优势不是“语言运行速度”，而是：
+
+半导体领域建模、MES 集成、实时事件处理、快速开发部署、规则标准化，以及从数据到生产决策的完整闭环。
